@@ -19,6 +19,8 @@ int is_installed(const char *lib_name)
 
 int resolver_main()
 {
+    printf("(*) resolver main started\n");
+
     // get local directory path
     char local_dir[PATH_MAX];
     get_local_dir(local_dir, sizeof(local_dir));
@@ -86,5 +88,7 @@ int resolver_main()
 
     json_decref(lib_array);
     json_decref(missing_array);
+
+    printf("(*) resolver main ended\n");
     return EXIT_SUCCESS;
 }

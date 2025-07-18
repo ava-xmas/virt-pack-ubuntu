@@ -121,19 +121,21 @@ bool write_json_to_file(json_t *array, const char *filename)
     return result == 0;
 }
 
-int parser_main()
+int parser_main(const char *env_name)
 {
+    printf("(*) parser main started\n");
+
     // get local virt-pack directory
     char local_dir[PATH_MAX];
     get_local_dir(local_dir, sizeof(local_dir));
 
-    // get events.jsonl -> input
+    // construct path to the env-specific events.json file
     char input_file[PATH_MAX];
-    snprintf(input_file, sizeof(input_file), "%s/events.jsonl");
+    snprintf(input_file, sizeof(input_file), "%s/%s-events.json", local_dir, env_name);
 
     // get libs-from-intercept.json <- output
     char output_file[PATH_MAX];
-    snprintf(output_file, sizeof(output_file), "%s/libs-from-intercept.json");
+    snprintf(output_file, sizeof(output_file), "%s/libs-from-intercept.json", local_dir);
 
     // give events.jsonl as input to find out all required libraries
     json_t *libs = collect_pkg_config_libs(input_file);
@@ -148,5 +150,7 @@ int parser_main()
     }
 
     json_decref(libs);
+
+    printf("(*) parser main ended\n");
     return EXIT_SUCCESS;
 }

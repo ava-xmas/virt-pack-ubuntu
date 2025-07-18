@@ -49,6 +49,8 @@ void record_installed_packages(json_t *installed_map, const char *env_name, cons
 
 int installer_main(int argc, char *argv[])
 {
+    printf("(*) installer main started\n");
+
     if (argc != 3)
     {
         printf("Usage: virt-pack make <env-name>");
@@ -133,5 +135,7 @@ int installer_main(int argc, char *argv[])
     }
 
     json_decref(installed);
+
+    printf("(*) installer main ended\n");
     return 0;
 }

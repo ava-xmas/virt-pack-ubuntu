@@ -2,6 +2,7 @@
 #define PARSER_H
 
 #include <jansson.h>
+#include <stdbool.h>
 
 #define INPUT_FILE "data/events.jsonl"
 #define OUTPUT_FILE "data/libs.json"

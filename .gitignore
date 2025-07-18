@@ -1,0 +1,12 @@
+data/
+test/
+
+.o
+.out
+.exe
+.log
+
+.vscode/
+
+__pycache__/
+*.pyc

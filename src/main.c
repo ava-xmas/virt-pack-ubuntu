@@ -73,7 +73,8 @@ int main(int argc, char *argv[])
         break;
 
     case CMD_MAKE:
-        char env_name[256]; // buffer to hold the directory path
+    {
+        char env_name[256];
 
         if (argc >= 3)
         {
@@ -88,8 +89,10 @@ int main(int argc, char *argv[])
         // ( after running intercept -- make )
         make(argc, argv);
         break;
+    }
 
     case CMD_REMOVE:
+    {
         char env_name[256]; // buffer to hold the directory path
 
         if (argc >= 3)
@@ -103,22 +106,30 @@ int main(int argc, char *argv[])
             return 1;
         }
         break;
+    }
 
     case CMD_SHOW:
+    {
         if (show_environments() < 0)
             return 1;
         break;
+    }
 
     case CMD_UPDATE_DB:
-        int result = system("python3 scripts/update_db.py");
+    {
+        int result = system("python3 /usr/local/share/virt-pack/scripts/update_db.py");
         if (result != 0)
         {
             fprintf(stderr, "[ERROR] Failed to update database\n");
         }
+        break;
+    }
 
     case CMD_UNKNOWN:
+    {
         printf("Command not recognized. Use `virt-pack help` to see valid commands.");
         break;
+    }
     }
 }
 
@@ -130,6 +141,7 @@ void print_help()
         "   virt-pack make <env-name>\n"
         "   virt-pack remove <env-name>\n"
         "   virt-pack show\n"
+        "   virt-pack update-db\n"
         "   virt-pack --version | virt-pack version\n"
         "   virt-pack --help | virt-pack help\n";
 
@@ -151,7 +163,7 @@ int show_environments()
 
     if (!root || !json_is_object(root))
     {
-        fprintf("[ERROR] Could not load or parse %s: %s\n", INSTALLED_FILE, error.text);
+        fprintf(stderr, "[ERROR] Could not load or parse %s: %s\n", INSTALLED_FILE, error.text);
         return -1;
     }
 
@@ -174,7 +186,7 @@ int show_environments()
     return 0;
 }
 
-void bear_intercept()
+void bear_intercept(const char *env_name)
 {
     printf("Intercepting using bear...\n");
 
@@ -183,19 +195,59 @@ void bear_intercept()
     get_local_dir(local_dir, sizeof(local_dir));
 
     char cmd[256];
-    snprintf(cmd, sizeof(cmd), "intercept -- make > %s/events.jsonl", local_dir);
+    snprintf(cmd, sizeof(cmd), "bear intercept -- make");
 
     int ret = system(cmd);
     if (ret != 0)
     {
         fprintf(stderr, "[ERROR] Failed to run bear intercept command\n");
+        return;
     }
+
+    // source and destination paths
+    char src_path[PATH_MAX];
+    snprintf(src_path, sizeof(src_path), "events.json");
+
+    char dest_path[PATH_MAX];
+    snprintf(dest_path, sizeof(dest_path), "%s/%s-events.json", local_dir, env_name);
+
+    FILE *src = fopen(src_path, "r");
+    if (!src)
+    {
+        perror("[ERROR] Could not open source events.json. Check perms and try again\n");
+        return;
+    }
+
+    FILE *dest = fopen(dest_path, "w");
+    if (!src)
+    {
+        perror("[ERROR] Could not create destination events.json. Check perms and try again\n");
+        fclose(src);
+        return;
+    }
+
+    char buffer[8192];
+    size_t bytes;
+    while ((bytes = fread(buffer, 1, sizeof(buffer), src)) > 0)
+    {
+        fwrite(buffer, 1, bytes, dest);
+    }
+
+    fclose(src);
+    fclose(dest);
+
+    printf("(*) Copied events.json to %s\n", dest_path);
+    printf("(*) bear intercept ended\n");
 }
 
 void make(int argc, char *argv[])
 {
-    bear_intercept();
-    parser_main();
-    resolver_main();
-    installer_main(argc, argv);
+    // get env name
+    char env_name[256];
+    snprintf(env_name, sizeof(env_name), "%s", argv[2]);
+
+    // bear_intercept(env_name);
+    parser_main(env_name);
+    // resolver_main();
+    // installer_main(argc, argv);
 }
