@@ -7,6 +7,6 @@
 #define INSTALLED_FILE DATA_DIR "installed.json"
 
 void uninstall_package(const char *pkgname);
-int uninstaller_main(int argc, char *argv[]);
+int uninstaller_main(const char *env_name);
 
 #endif

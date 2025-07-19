@@ -47,17 +47,10 @@ void record_installed_packages(json_t *installed_map, const char *env_name, cons
     json_array_append_new(pkg_array, json_string(pkgname));
 }
 
-int installer_main(int argc, char *argv[])
+int installer_main(const char *env_name)
 {
     printf("(*) installer main started\n");
 
-    if (argc != 3)
-    {
-        printf("Usage: virt-pack make <env-name>");
-        return EXIT_FAILURE;
-    }
-
-    const char *env_name = argv[2];
     json_error_t error;
 
     // get local directory path
@@ -90,7 +83,7 @@ int installer_main(int argc, char *argv[])
     // install the packages
 
     char installed_file[PATH_MAX];
-    snprintf(installed_file, sizeof(installed_file), "%s/installed.json", local_dir);
+    snprintf(installed_file, sizeof(installed_file), "%s/%s-installed.json", local_dir, env_name);
 
     json_t *installed = json_load_file(installed_file, 0, &error);
     if (!installed)

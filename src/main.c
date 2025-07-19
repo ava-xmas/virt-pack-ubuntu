@@ -19,6 +19,7 @@ void print_help();
 void print_version();
 int show_environments();
 void make(int argc, char *argv[]);
+void uninstall(int argc, char *argv[]);
 void bear_intercept();
 
 typedef enum
@@ -105,6 +106,7 @@ int main(int argc, char *argv[])
             printf("Use `virt-pack show` to show names of all environments.\n");
             return 1;
         }
+        uninstall(argc, argv);
         break;
     }
 
@@ -246,8 +248,17 @@ void make(int argc, char *argv[])
     char env_name[256];
     snprintf(env_name, sizeof(env_name), "%s", argv[2]);
 
-    // bear_intercept(env_name);
+    bear_intercept(env_name);
     parser_main(env_name);
-    // resolver_main();
-    // installer_main(argc, argv);
+    resolver_main();
+    installer_main(env_name);
+}
+
+void uninstall(int argc, char *argv[])
+{
+    // get env name
+    char env_name[256];
+    snprintf(env_name, sizeof(env_name), "%s", argv[2]);
+
+    uninstaller_main(env_name);
 }

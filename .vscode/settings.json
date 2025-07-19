@@ -1,8 +1,0 @@
-{
-    "files.associations": {
-        "*.jsonl": "json",
-        "installer.h": "c",
-        "limits.h": "c",
-        "types.h": "c"
-    }
-}

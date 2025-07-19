@@ -4,8 +4,8 @@
 #include <string.h>
 
 #define VIRT_PACK_LOCAL_DIR_PATH ".local/share/virt-pack"
-#define DATA_DIR "data/"
-#define INSTALLED_FILE DATA_DIR "installed.json"
+
+#define PATH_MAX 4096
 
 // uninstall a package via apt
 void uninstall_package(const char *pkgname)
@@ -25,30 +25,20 @@ void uninstall_package(const char *pkgname)
     printf("[OK] %s uninstalled successfully.\n", pkgname);
 }
 
-int uninstaller_main(int argc, char *argv[])
+int uninstaller_main(const char *env_name)
 {
-    if (argc != 3)
-    {
-        printf("Usage: virt-pack remove <env-name>");
-        return EXIT_FAILURE;
-    }
+    char local_dir[PATH_MAX];
+    get_local_dir(local_dir, sizeof(local_dir));
 
-    const char *env_name = argv[2];
+    char installed_file[PATH_MAX];
+    snprintf(installed_file, sizeof(installed_file), "%s/%s-installed.json", local_dir, env_name);
 
     json_error_t error;
-    json_t *root = json_load_file(INSTALLED_FILE, 0, &error);
+    json_t *pkg_array = json_load_file(installed_file, 0, &error);
 
-    if (!root || !json_is_array(root))
-    {
-        fprintf(stderr, "[ERROR] Failed to load %s: %s\n", INSTALLED_FILE, error.text);
-        return EXIT_FAILURE;
-    }
-
-    json_t *pkg_array = json_object_get(root, env_name);
     if (!pkg_array || !json_is_array(pkg_array))
     {
-        fprintf(stderr, "[ERROR] No installed packages found for environment: %s\n", env_name);
-        json_decref(root);
+        fprintf(stderr, "[ERROR] Failed to load %s: %s\n", installed_file, error.text);
         return EXIT_FAILURE;
     }
 
@@ -63,13 +53,25 @@ int uninstaller_main(int argc, char *argv[])
         uninstall_package(pkg_name);
     }
 
-    // remove the environment entry from the file
-    json_object_del(root, env_name);
-    if (json_dump_file(root, INSTALLED_FILE, JSON_INDENT(2)))
+    if (remove(installed_file) != 0)
     {
-        fprintf(stderr, "[WARNING] Failed to update %s after uninstall\n", INSTALLED_FILE);
+        fprintf(stderr, "[WARNING] Failed to remove %s\n", installed_file);
+    }
+    else
+    {
+        printf("[OK] Removed %s\n", installed_file);
     }
 
-    json_decref(root);
+    // delete the installed file after uninstall
+    if (remove(installed_file) != 0)
+    {
+        fprintf(stderr, "[WARNING] Failed to remove %s\n", installed_file);
+    }
+    else
+    {
+        printf("[OK] Removed %s\n", installed_file);
+    }
+
+    json_decref(pkg_array);
     return EXIT_SUCCESS;
 }
