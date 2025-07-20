@@ -1,7 +1,7 @@
 CC = gcc
 TARGET = virt-pack-test
 
-# Replace this with the libraries you want to download
+# Replace this with the libraries you want to use
 LIB_NAME = <library-name>
 PKG := pkg-config --cflags --libs $(LIB_NAME)
 

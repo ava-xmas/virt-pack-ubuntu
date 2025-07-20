@@ -1,10 +1,10 @@
 # virt-pack
----
+
 virt-pack is a tool that uses [bear](https://github.com/rizsotto/Bear) to intercept your build commands, and detects missing system libraries (via `pkg-config`) and installs them using your system's package manager. It's especially useful for C/C++ projects with messy dependencies.
 This version also only supports **custom, user-written Makefiles** for now. Support for build tools like Cargo, CMake, etc. is **WIP**.
 
 ## Installation
----
+
 This version of virt-pack currently only supports Debian-based systems as it uses the `apt` and `apt-file` tools to install missing libraries.
 Since the tool uses [bear](https://github.com/rizsotto/Bear), run the following command in your terminal to install it
 ```
@@ -19,7 +19,7 @@ chmod +x install.sh
 ```
 
 ## How to use
----
+
 After installation, move into your project directory with missing dependencies and run the following command:
 ```
 virt-pack update-db
@@ -34,8 +34,29 @@ virt-pack remove <env-name>
 ```
 This will only remove the packages that were installed using virt-pack. The libraries that you had before will not be removed.
 
+## Example
+
+Here's a minimal Makefile that virt-pack can work with:
+```
+CC = gcc
+TARGET = virt-pack-test
+
+# Replace this with the libraries you want to use
+LIB_NAME = <library-name>
+PKG := pkg-config --cflags --libs $(LIB_NAME)
+
+all: $(TARGET)
+
+$(TARGET): main.c
+	$(CC) main.c -o $(TARGET) $(shell $(PKG))
+
+clean:
+	rm -f $(TARGET)
+```
+See the [test/Makefile](test/Makefile) for a sample project that uses virt-pack.
+
 ## Working
----
+
 ### Database of Libraries
 `virt-pack` maintains a local database (`virt-pack-db.json`) that maps library names (from `.pc` files) to their corresponding Debian packages.
 To keep this mapping up to date, it uses a script that downloads Debian's [`Contents-amd64.gz`](http://ftp.debian.org/debian/dists/bookworm/main/Contents-amd64.gz), a list of all files in Debian packages.

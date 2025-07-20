@@ -20,7 +20,7 @@ void print_version();
 int show_environments();
 void make(int argc, char *argv[]);
 void uninstall(int argc, char *argv[]);
-void bear_intercept();
+void bear_intercept(const char *env_name);
 
 typedef enum
 {
@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
             return 1;
         }
         // logic to run parser -> resolver -> installer whilst referencing events.jsonl from the user's project directory
-        // ( after running intercept -- make )
+        // ( after running bear intercept -- make )
         make(argc, argv);
         break;
     }
