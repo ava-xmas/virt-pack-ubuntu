@@ -9,38 +9,43 @@
 #include "../include/resolver.h"
 #include "../include/uninstaller.h"
 #include "../include/util.h"
+#include "../include/commands.h"
 
-#define VIRT_PACK_LOCAL_DIR_PATH ".local/share/virt-pack"
-#define DATA_DIR "data/"
-#define INSTALLED_FILE DATA_DIR "installed.json"
 #define PATH_MAX 4096
 
-void print_help();
 void print_version();
-int show_environments();
-void make(int argc, char *argv[]);
-void uninstall(int argc, char *argv[]);
-void bear_intercept(const char *env_name);
 
 typedef enum
 {
     CMD_MAKE,
     CMD_REMOVE,
     CMD_SHOW,
+    CMD_SHOW_ENV,
     CMD_UPDATE_DB,
     CMD_HELP,
     CMD_VERSION,
     CMD_UNKNOWN
 } Command;
 
-Command parse_command(const char *cmd)
+Command parse_command(int argc, char *argv[])
 {
+    char *cmd = argv[1];
+    char *env_name = "";
+
+    if (argc > 2)
+        env_name = argv[2];
+
     if (strcmp(cmd, "make") == 0)
         return CMD_MAKE;
     if (strcmp(cmd, "remove") == 0)
         return CMD_REMOVE;
     if (strcmp(cmd, "show") == 0)
-        return CMD_SHOW;
+    {
+        if (strcmp(env_name, "") == 0)
+            return CMD_SHOW;
+        else
+            return CMD_SHOW_ENV;
+    }
     if (strcmp(cmd, "update-db") == 0)
         return CMD_UPDATE_DB;
     if (strcmp(cmd, "--help") == 0 || strcmp(cmd, "help") == 0)
@@ -61,7 +66,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    Command cmd = parse_command(argv[1]);
+    Command cmd = parse_command(argc, argv);
 
     switch (cmd)
     {
@@ -88,7 +93,7 @@ int main(int argc, char *argv[])
         }
         // logic to run parser -> resolver -> installer whilst referencing events.jsonl from the user's project directory
         // ( after running bear intercept -- make )
-        make(argc, argv);
+        handle_make(argc, argv);
         break;
     }
 
@@ -106,7 +111,7 @@ int main(int argc, char *argv[])
             printf("Use `virt-pack show` to show names of all environments.\n");
             return 1;
         }
-        uninstall(argc, argv);
+        handle_remove(argc, argv);
         break;
     }
 
@@ -114,6 +119,19 @@ int main(int argc, char *argv[])
     {
         if (show_environments() < 0)
             return 1;
+        break;
+    }
+
+    case CMD_SHOW_ENV:
+    {
+        char env_name[256];
+
+        if (argc >= 3)
+        {
+            snprintf(env_name, sizeof(env_name), "%s", argv[2]);
+        }
+
+        show_env_packages(env_name);
         break;
     }
 
@@ -135,130 +153,10 @@ int main(int argc, char *argv[])
     }
 }
 
-void print_help()
-{
-    const char *help_text =
-        "\n"
-        "Usage:\n"
-        "   virt-pack make <env-name>\n"
-        "   virt-pack remove <env-name>\n"
-        "   virt-pack show\n"
-        "   virt-pack update-db\n"
-        "   virt-pack --version | virt-pack version\n"
-        "   virt-pack --help | virt-pack help\n";
-
-    fputs(help_text, stdout);
-}
-
 void print_version()
 {
     const char *version_text =
         "virt-pack version 1.0.0\n";
 
     fputs(version_text, stdout);
-}
-
-int show_environments()
-{
-    json_error_t error;
-    json_t *root = json_load_file(INSTALLED_FILE, 0, &error);
-
-    if (!root || !json_is_object(root))
-    {
-        fprintf(stderr, "[ERROR] Could not load or parse %s: %s\n", INSTALLED_FILE, error.text);
-        return -1;
-    }
-
-    const char *key;
-    json_t *value;
-    int count = 0;
-
-    printf("Finding created environments...");
-    json_object_foreach(root, key, value)
-    {
-        printf("%s  ", key);
-        count++;
-    }
-    printf("\n");
-
-    if (count == 0)
-        printf("    (No environments found)\n");
-
-    json_decref(root);
-    return 0;
-}
-
-void bear_intercept(const char *env_name)
-{
-    printf("Intercepting using bear...\n");
-
-    // get local directory path
-    char local_dir[PATH_MAX];
-    get_local_dir(local_dir, sizeof(local_dir));
-
-    char cmd[256];
-    snprintf(cmd, sizeof(cmd), "bear intercept -- make");
-
-    int ret = system(cmd);
-    if (ret != 0)
-    {
-        fprintf(stderr, "[ERROR] Failed to run bear intercept command\n");
-        return;
-    }
-
-    // source and destination paths
-    char src_path[PATH_MAX];
-    snprintf(src_path, sizeof(src_path), "events.json");
-
-    char dest_path[PATH_MAX];
-    snprintf(dest_path, sizeof(dest_path), "%s/%s-events.json", local_dir, env_name);
-
-    FILE *src = fopen(src_path, "r");
-    if (!src)
-    {
-        perror("[ERROR] Could not open source events.json. Check perms and try again\n");
-        return;
-    }
-
-    FILE *dest = fopen(dest_path, "w");
-    if (!src)
-    {
-        perror("[ERROR] Could not create destination events.json. Check perms and try again\n");
-        fclose(src);
-        return;
-    }
-
-    char buffer[8192];
-    size_t bytes;
-    while ((bytes = fread(buffer, 1, sizeof(buffer), src)) > 0)
-    {
-        fwrite(buffer, 1, bytes, dest);
-    }
-
-    fclose(src);
-    fclose(dest);
-
-    printf("(*) Copied events.json to %s\n", dest_path);
-    printf("(*) bear intercept ended\n");
-}
-
-void make(int argc, char *argv[])
-{
-    // get env name
-    char env_name[256];
-    snprintf(env_name, sizeof(env_name), "%s", argv[2]);
-
-    bear_intercept(env_name);
-    parser_main(env_name);
-    resolver_main();
-    installer_main(env_name);
-}
-
-void uninstall(int argc, char *argv[])
-{
-    // get env name
-    char env_name[256];
-    snprintf(env_name, sizeof(env_name), "%s", argv[2]);
-
-    uninstaller_main(env_name);
 }

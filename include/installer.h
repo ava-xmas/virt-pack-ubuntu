@@ -6,7 +6,6 @@
 #define DATA_DIR "data/"
 #define MISSING_FILE DATA_DIR "missing-libs.json"
 #define DB_FILE DATA_DIR "virt-pack-db.json"
-#define INSTALLED_FILE DATA_DIR "installed.json"
 
 void install_package(const char *pkgname);
 void record_installed_packages(json_t *installed_map, const char *env_name, const char *pkgname);
