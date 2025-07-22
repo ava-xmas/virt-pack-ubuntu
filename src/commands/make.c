@@ -1,7 +1,7 @@
 #include "../../include/commands.h"
 #include "../../include/util.h"
 
-void bear_intercept(const char *env_name)
+void bear_intercept(const char *env_name, BuildTool tool)
 {
     printf("Intercepting using bear...\n");
 
@@ -10,7 +10,14 @@ void bear_intercept(const char *env_name)
     get_local_dir(local_dir, sizeof(local_dir));
 
     char cmd[256];
-    snprintf(cmd, sizeof(cmd), "bear intercept -- make");
+    switch (tool)
+    {
+    case MAKE:
+        snprintf(cmd, sizeof(cmd), "bear intercept -- make");
+
+    case CMAKE:
+        snprintf(cmd, sizeof(cmd), "bear intercept -- cmake ..");
+    }
 
     int ret = system(cmd);
     if (ret != 0)
@@ -55,13 +62,13 @@ void bear_intercept(const char *env_name)
     printf("(*) bear intercept ended\n");
 }
 
-void handle_make(int argc, char *argv[])
+void handle_make(int argc, char *argv[], BuildTool tool)
 {
     // get env name
     char env_name[256];
     snprintf(env_name, sizeof(env_name), "%s", argv[2]);
 
-    bear_intercept(env_name);
+    bear_intercept(env_name, tool);
     parser_main(env_name);
     resolver_main();
     installer_main(env_name);

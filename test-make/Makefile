@@ -1,5 +1,5 @@
 CC = gcc
-TARGET = virt-pack-test
+TARGET = virt-pack-test-make
 
 # Replace this with the libraries you want to use
 LIB_NAME = <library-name>

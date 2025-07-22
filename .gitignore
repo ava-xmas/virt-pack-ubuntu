@@ -10,3 +10,5 @@ test-nopush/
 
 __pycache__/
 *.pyc
+
+test/

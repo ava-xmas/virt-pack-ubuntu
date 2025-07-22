@@ -10,6 +10,14 @@
 #include "../../include/parser.h"
 #include "../../include/commands.h"
 
+int has_installed_suffix(const char *filename)
+{
+    size_t len = strlen(filename);
+    const char *suffix = "-installed.json";
+    size_t suffix_len = strlen(suffix);
+    return len > suffix_len && strcmp(filename + len - suffix_len, suffix) == 0;
+}
+
 int show_environments()
 {
     char local_dir[PATH_MAX];
@@ -30,13 +38,18 @@ int show_environments()
     while ((entry = readdir(dir)) != NULL)
     {
         const char *name = entry->d_name;
-        size_t len = strlen(name);
 
-        if (len > 17 && strcmp(name + len - 17, "-installed.json") == 0)
+        // Skip "." and ".."
+        if (strcmp(name, ".") == 0 || strcmp(name, "..") == 0)
+            continue;
+
+        // Match files that end in "-installed.json"
+        if (has_installed_suffix(name))
         {
+            size_t len = strlen(name) - strlen("-installed.json");
             char env_name[256];
-            strncpy(env_name, name, len - 17);
-            env_name[len - 17] = '\0';
+            strncpy(env_name, name, len);
+            env_name[len] = '\0';
 
             printf("  %s\n", env_name);
             count++;
