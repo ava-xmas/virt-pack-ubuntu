@@ -1,5 +1,6 @@
 #include "../../include/commands.h"
 #include "../../include/util.h"
+#include "../../include/uninstaller.h"
 
 void handle_remove(int argc, char *argv[])
 {
