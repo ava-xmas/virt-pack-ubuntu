@@ -1,5 +1,8 @@
 #include "../../include/commands.h"
 #include "../../include/util.h"
+#include "../../include/parser.h"
+#include "../../include/resolver.h"
+#include "../../include/installer.h"
 
 void bear_intercept(const char *env_name, BuildTool tool)
 {

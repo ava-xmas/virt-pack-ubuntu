@@ -6,16 +6,16 @@ This version also only supports **custom, user-written Makefiles** for now. Supp
 ## Installation
 
 This version of virt-pack currently only supports Debian-based systems as it uses the `apt` and `apt-file` tools to install missing libraries.
-Since the tool uses [bear](https://github.com/rizsotto/Bear), run the following command in your terminal to install it
+The tool requires [bear](https://github.com/rizsotto/Bear), libjansson, run the following commands in your terminal to install them:
 ```
 sudo apt install bear
+sudo apt install libjansson-dev
 ```
 After this, we can run the following commands in an empty directory to install **virt-pack**
 ```
 git clone https://github.com/ava-xmas/virt-pack-ubuntu.git
 cd virt-pack-ubuntu
-chmod +x install.sh
-./install.sh
+sudo make install
 ```
 
 ## How to use
