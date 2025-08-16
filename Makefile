@@ -5,6 +5,7 @@ LDLIBS := -ljansson
 
 PREFIX ?= /usr/local
 BINDIR := $(PREFIX)/bin
+SCRIPTDIR := $(PREFIX)/share/virt-pack/scripts
 
 all: virt-pack
 
@@ -14,7 +15,7 @@ virt-pack: $(OBJS)
 install: all
 	mkdir -p $(BINDIR)
 	install virt-pack $(BINDIR)
-	install scripts/update_db.py $(BINDIR)
+	install scripts/update_db.py $(SCRIPTDIR)
 
 clean:
 	rm -f virt-pack src/*.o
